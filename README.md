@@ -1,6 +1,9 @@
 # A simple Python script with no external dependencies to safely close all windows/programs with a single click.
 ## Can be used to prepare the system for shutdown or to quickly close running applications.
 
+## .EXE Realizes: 
+https://github.com/non4ik-sdk/CloseAll/releases
+
 ## Build and Run from Source
 
 To build the executable from source, install Python 3.13.x or higher and Nuitka `pip install Nuitka`.  
