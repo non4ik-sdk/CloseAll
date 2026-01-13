@@ -36,7 +36,7 @@ def auto_accept_dialog(hwnd):
             ctrl_id = GetDlgCtrlID(child)
             if ctrl_id in PREFERRED_IDS:
                 PostMessageW(child, BM_CLICK, 0, 0)
-                time.sleep(0.05)  # небольшая пауза
+                time.sleep(0.05) 
                 return False
         except Exception:
             pass
@@ -47,10 +47,8 @@ def auto_accept_dialog(hwnd):
 def close_user_windows():
     def enum_window(hwnd, lparam):
         try:
-            if not IsWindowVisible(hwnd):
-                return True
-
-            if GetWindowTextLengthW(hwnd) == 0:
+            text_len = GetWindowTextLengthW(hwnd)
+            if text_len == 0 and IsWindowVisible(hwnd):
                 return True
 
             class_name = ctypes.create_unicode_buffer(64)
@@ -63,7 +61,7 @@ def close_user_windows():
                 auto_accept_dialog(hwnd)
             else:
                 PostMessageW(hwnd, WM_CLOSE, 0, 0)
-                time.sleep(0.05)  # пауза после отправки сообщения
+                time.sleep(0.05)
 
         except Exception:
             pass
