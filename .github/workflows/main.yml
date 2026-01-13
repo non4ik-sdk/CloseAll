@@ -32,7 +32,8 @@ jobs:
 
       - name: Build .EXE 
         run: |
-          python -m nuitka --onefile --standalone --windows-console-mode=disable --output-filename=Close.exe CloseAll.py
+          python -m nuitka --onefile --standalone --windows-console-mode=disable --assume-yes-for-downloads --output-filename=Close.exe CloseAll.py
+
 
       - name: GitHub Release
         id: create_release
