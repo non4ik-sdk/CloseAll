@@ -43,7 +43,7 @@ jobs:
           --windows-product-name="CloseAll" ^
           --windows-file-version=${{ steps.version.outputs.VERSION }} ^
           --windows-product-version=${{ steps.version.outputs.VERSION }} ^
-          --output-filename=Close.exe CloseAll.py
+          --output-filename=CloseAll.exe CloseAll.py
 
       - name: Create Release and Upload EXE
         uses: softprops/action-gh-release@v1
