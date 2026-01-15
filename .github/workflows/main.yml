@@ -30,15 +30,20 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install nuitka
 
-      - name: Build EXE
-        run: |
-          python -m nuitka --onefile --standalone --windows-console-mode=disable --assume-yes-for-downloads --output-filename=Close.exe CloseAll.py
-
       - name: Set version from date
         id: version
         run: |
           for /f "delims=" %%a in ('powershell -NoProfile -Command "Get-Date -Format yyyy.MM.dd"') do set VER=%%a
           echo ::set-output name=VERSION::%VER%
+
+      - name: Build EXE
+        run: |
+          python -m nuitka --onefile --standalone --assume-yes-for-downloads ^
+          --windows-company-name="non4ik-sdk" ^
+          --windows-product-name="CloseAll" ^
+          --windows-file-version=${{ steps.version.outputs.VERSION }} ^
+          --windows-product-version=${{ steps.version.outputs.VERSION }} ^
+          --output-filename=Close.exe CloseAll.py
 
       - name: Create Release and Upload EXE
         uses: softprops/action-gh-release@v1
