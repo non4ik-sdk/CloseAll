@@ -6,21 +6,43 @@ import time
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 
 EnumWindows = user32.EnumWindows
+EnumWindows.argtypes = (ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM), wintypes.LPARAM)
+EnumWindows.restype = wintypes.BOOL
+
 EnumChildWindows = user32.EnumChildWindows
-EnumProc = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+EnumChildWindows.argtypes = (wintypes.HWND, ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM), wintypes.LPARAM)
+EnumChildWindows.restype = wintypes.BOOL
 
 IsWindowVisible = user32.IsWindowVisible
+IsWindowVisible.argtypes = (wintypes.HWND,)
+IsWindowVisible.restype = wintypes.BOOL
+
+IsWindow = user32.IsWindow
+IsWindow.argtypes = (wintypes.HWND,)
+IsWindow.restype = wintypes.BOOL
+
 GetWindowTextLengthW = user32.GetWindowTextLengthW
+GetWindowTextLengthW.argtypes = (wintypes.HWND,)
+GetWindowTextLengthW.restype = ctypes.c_int
+
 GetClassNameW = user32.GetClassNameW
+GetClassNameW.argtypes = (wintypes.HWND, wintypes.LPWSTR, ctypes.c_int)
+GetClassNameW.restype = ctypes.c_int
+
 PostMessageW = user32.PostMessageW
+PostMessageW.argtypes = (wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM)
+PostMessageW.restype = wintypes.BOOL
+
 GetDlgCtrlID = user32.GetDlgCtrlID
+GetDlgCtrlID.argtypes = (wintypes.HWND,)
+GetDlgCtrlID.restype = ctypes.c_int
 
 WM_CLOSE = 0x0010
 BM_CLICK = 0x00F5
 
 IDOK = 1
 IDYES = 6
-PREFERRED_IDS = (IDYES, IDOK)
+PREFERRED_IDS = {IDYES, IDOK}
 
 BLACKLIST_CLASSES = {
     "Shell_TrayWnd",
@@ -31,46 +53,57 @@ BLACKLIST_CLASSES = {
 }
 
 def auto_accept_dialog(hwnd):
-    def enum_child(child, lparam):
-        try:
-            ctrl_id = GetDlgCtrlID(child)
-            if ctrl_id in PREFERRED_IDS:
-                PostMessageW(child, BM_CLICK, 0, 0)
-                time.sleep(0.05) 
-                return False
-        except Exception:
-            pass
+
+    def enum_child(child, _):
+        ctrl_id = GetDlgCtrlID(child)
+
+        if ctrl_id in PREFERRED_IDS:
+            PostMessageW(child, BM_CLICK, 0, 0)
+            time.sleep(0.03)
+            return False
+
         return True
 
-    EnumChildWindows(hwnd, EnumProc(enum_child), 0)
+    EnumChildWindows(hwnd, CHILD_ENUM_PROC(enum_child), 0)
+
 
 def close_user_windows():
-    def enum_window(hwnd, lparam):
-        try:
-            text_len = GetWindowTextLengthW(hwnd)
-            if text_len == 0 and IsWindowVisible(hwnd):
-                return True
 
-            class_name = ctypes.create_unicode_buffer(64)
-            GetClassNameW(hwnd, class_name, 64)
+    def enum_window(hwnd, _):
 
-            if class_name.value in BLACKLIST_CLASSES:
-                return True
+        if not IsWindow(hwnd):
+            return True
 
-            if class_name.value == "#32770":
-                auto_accept_dialog(hwnd)
-            else:
-                PostMessageW(hwnd, WM_CLOSE, 0, 0)
-                time.sleep(0.05)
+        if not IsWindowVisible(hwnd):
+            return True
 
-        except Exception:
-            pass
+        text_len = GetWindowTextLengthW(hwnd)
+        if text_len == 0:
+            return True
+
+        class_buf = ctypes.create_unicode_buffer(64)
+        GetClassNameW(hwnd, class_buf, 64)
+
+        class_name = class_buf.value
+
+        if class_name in BLACKLIST_CLASSES:
+            return True
+
+        if class_name == "#32770":
+            auto_accept_dialog(hwnd)
+        else:
+            PostMessageW(hwnd, WM_CLOSE, 0, 0)
+            time.sleep(0.03)
+
         return True
 
-    EnumWindows(EnumProc(enum_window), 0)
+    EnumWindows(WINDOW_ENUM_PROC(enum_window), 0)
+
+
+WINDOW_ENUM_PROC = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+CHILD_ENUM_PROC = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+
 
 if __name__ == "__main__":
-    try:
-        close_user_windows()
-    finally:
-        sys.exit(0)
+    close_user_windows()
+    sys.exit(0)
